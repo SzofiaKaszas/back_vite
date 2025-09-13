@@ -1,5 +1,3 @@
-import { getProfile } from "./main";
-
 async function LoginForm_Click(e: any) {
     e.preventDefault();
     const loginUsername = (document.getElementById("loginUsername") as HTMLInputElement);
@@ -27,8 +25,6 @@ async function LoginForm_Click(e: any) {
     } else {
         alert("Hibás felhasználónév vagy jelszó!");
     }
-
-    getProfile();
 };
 
 document.addEventListener("DOMContentLoaded", () => {

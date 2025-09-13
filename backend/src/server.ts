@@ -31,7 +31,7 @@ const registerLimiter = rateLimit({
 
 function authenticateToken(req: any, res: any, next: any) {
   const authHeader = req.headers["authorization"];
-  const token = authHeader && authHeader.split(" ")[1]; // "Bearer TOKEN"
+  const token = authHeader && authHeader.split(" ")[1];
 
   if (!token) return res.status(401).json({ success: false, message: "Token required" });
 
@@ -108,10 +108,6 @@ app.post('/register', registerLimiter, async (req: any, res: any) => {
       )
     });
 })
-
-app.get("/profile", authenticateToken, (req: any, res) => {
-  res.json({ success: true, user: req.user });
-});
 
 app.listen(port, () => {
   console.log(`Server running on: ${port}`)
