@@ -24,8 +24,8 @@ const loginLimiter = rateLimit({
 });
 
 const registerLimiter = rateLimit({
-  windowMs: 60* 60 * 1000,
-  max: 5, 
+  windowMs: 60 * 60 * 1000,
+  max: 5,
   message: { success: false, message: "Túl sok regisztrációs próbálkozás. Próbáld később!" }
 });
 
@@ -41,8 +41,6 @@ function authenticateToken(req: any, res: any, next: any) {
     next();
   });
 }
-
-//const mfaCodes: { [username: string]: string } = {};
 
 app.post('/login', loginLimiter, (req: any, res: any) => {
   const { username, password } = req.body;
@@ -63,14 +61,11 @@ app.post('/login', loginLimiter, (req: any, res: any) => {
       const validatePassword = await bcrypt.compare(password, user.password);
 
       if (validatePassword == true) {
-        /*const mfaCode = Math.floor(100000 + Math.random() * 900000).toString();
-        mfaCodes[username] = mfaCode;*/
-        //res.json({ success: true, mfaRequired: true, message: "MFA kód szükséges", mfaCode });
         const token = jwt.sign({ username: user.username }, "titkoskulcs", { expiresIn: "1h" });
         res.json({ success: true, token, message: "Sikeres bejelentkezés " + user.username + " felhasználóként!" });
       }
       else {
-          res.status(401).json({ success: false, message: "Hibás felhasználónév vagy jelszó!" });
+        res.status(401).json({ success: false, message: "Hibás felhasználónév vagy jelszó!" });
       }
     }
   )
@@ -80,33 +75,35 @@ app.post('/register', registerLimiter, async (req: any, res: any) => {
   const { username, password } = req.body;
   const hashedPassword = await bcrypt.hash(password, 10);
 
+
   database_connection.query(
-    "SELECT * FROM users WHERE username = ?",
-    [username],
+    "INSERT INTO users (username, password) VALUES (?, ?)",
+    [username, hashedPassword],
+    async (error, result) => {
+      if (error) {
+        return res.status(500).json({ success: false, message: "Hiba az adatok beszúrásánál az adatbázisba. Hiba: " + error.message });
+      }
+
+      if ((result as any).affectedRows === 0) {
+        return res.status(500).json({ success: false, message: "A beszúrt sorok száma = 0." });
+      }
+
+      res.json({ success: true, message: "Sikeres regisztráció!" });
+    }
+  )
+});
+
+app.get('/username', (req: any, res: any) => {
+  database_connection.query(
+    "SELECT username FROM users",
     (error, result) => {
       if (error) {
         return res.status(500).json({ success: false, message: "Adatbázis hiba: " + error.message });
       }
-      if ((result as any).length > 0) {
-        return res.json({ success: false, message: "Ez a felhasználónév már foglalt." })
-      }
 
-      database_connection.query(
-        "INSERT INTO users (username, password) VALUES (?, ?)",
-        [username, hashedPassword],
-        async (error, result) => {
-          if (error) {
-            return res.status(500).json({ success: false, message: "Hiba az adatok beszúrásánál az adatbázisba. Hiba: " + error.message });
-          }
-
-          if ((result as any).affectedRows === 0) {
-            return res.status(500).json({ success: false, message: "A beszúrt sorok száma = 0." });
-          }
-
-          res.json({ success: true, message: "Sikeres regisztráció!" });
-        }
-      )
-    });
+      res.json({ success: true, usernames: result });
+    }
+  )
 })
 
 app.listen(port, () => {

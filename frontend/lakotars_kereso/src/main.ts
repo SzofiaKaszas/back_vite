@@ -1,3 +1,5 @@
+import './main.css'
+
 function routeToLogin() {
   const token = localStorage.getItem("token");
   const button = document.getElementById("toLogin") as HTMLButtonElement;

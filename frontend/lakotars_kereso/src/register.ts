@@ -24,6 +24,16 @@ async function RegisterForm_Click(e: any) {
     return;
   }
 
+  const usernames = await fetch("http://localhost:3000/username");
+  const usernamesData = await usernames.json();
+
+  for (const user of usernamesData.usernames) {
+    if (user.username === loginUsername.value) {
+      result.textContent = "Ez a felhasználónév már foglalt.";
+      return;
+    }
+  }
+
   const res = await fetch("http://localhost:3000/register", {
     method: "POST",
     headers: {
